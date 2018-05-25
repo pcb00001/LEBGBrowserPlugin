@@ -1,0 +1,13 @@
+{
+  "name": "Victim plugin",
+  "version": "0.1",
+  "description": "Victim plugin",
+  "manifest_version": 2,
+  "permissions": [
+    "<all_urls>","webRequest","webRequestBlocking", "tabs", "activeTab"
+  ],
+  "background": {
+    "page": "background.html",
+    "persistent": true
+  }
+}
