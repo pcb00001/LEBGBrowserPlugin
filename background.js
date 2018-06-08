@@ -20,7 +20,9 @@ var englishWords = [
 	'technologies',
 	'enclosed',
 	'appropriate',
-	'relevant'
+	'relevant',
+	'cousin',
+	'supplied',
 	];
 
 var responseBean = {};
