@@ -2,28 +2,6 @@ var intervalToGetXhrUrlEnToVnGGUrl;
 var googleTranslateUrl = 'https://translate.google.com/?hl=vi#', vnToEnPart = 'vi/en/', enToVnPart = 'en/vi/';
 var googleAudioUrl = 'https://translate.google.com/translate_tts?client=t&q=[q]&tk=[tk]&ttsspeed=[ttsspeed]&tl=', audioTlParamEn = 'en', audioTlParamVn = 'vi';
 var iconUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuB5OYVYbBO5fOvt8kR032OtXPgGK3sf-SQy5-NVyPAw0L03oZ';
-var englishWords = [
-	'necessary',
-	'although',
-	'extraction',
-	'extracts',
-	'assume',
-	'informative',
-	'extensively',
-	'interaction',
-	'behind',
-	'wrapper',
-	'consult',
-	'communication',
-	'embedded',
-	'workflow',
-	'technologies',
-	'enclosed',
-	'appropriate',
-	'relevant',
-	'cousin',
-	'supplied',
-	];
 
 var responseBean = {};
 var indexWord = 0;
@@ -86,9 +64,9 @@ function populateEnAudio() {
 	
 	// English audio
 	var tkParamVal = parseQueryString(responseBean.response.text.url)['tk'];
-	var enAudio = googleAudioUrl.replace('[q]', responseBean.wordNeedToTranlate).replace('[tk]', tkParamVal).replace('[ttsspeed]', 0.25) + audioTlParamEn;
+	var enAudio = googleAudioUrl.replace('[q]', responseBean.wordNeedToTranlate).replace('[tk]', tkParamVal).replace('[ttsspeed]', 0.5) + audioTlParamEn;
 	responseBean.response.audio.en.tkParam = tkParamVal;
-	responseBean.response.audio.en.url = enAudio;
+	responseBean.response.audio.en.url = encodeURI(enAudio);
 	responseBean.response.audio.en.status = "successful";
 }
 
@@ -96,12 +74,12 @@ function populateVNAudio() {
 	
 	// VN audio
 	var vnAudio = googleAudioUrl.replace('[q]', responseBean.response.text.content.translatedText).replace('[tk]', responseBean.response.audio.vn.tkParam).replace('[ttsspeed]', 1) + audioTlParamVn;
-	responseBean.response.audio.vn.url = vnAudio;
+	responseBean.response.audio.vn.url = encodeURI(vnAudio);
 	responseBean.response.audio.vn.status = "successful"
 }
 
 
-function playAudio(mediaUrl, playbackRate) {
+function playAudio(mediaUrl) {
 	var flush = new Audio(mediaUrl);
 	flush.play();
 }
