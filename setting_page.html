@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8">
+    <title>Setting Page</title>
+    <script src="jquery-3.3.1.min.js"></script>
+    <script src="firebase.js"></script>
+    <script src="firebase_db.js"></script>
+    <script src="words_collection.js"></script>
+    <script src="setting_page.js"></script>
+    <link rel="stylesheet" href="setting_page.css">
+</head>
+
+<body id="content-inside-iframe">
+    <div class="boxshadow">
+        <table id="my-modal">
+            <tr>
+                <td colspan="2">
+                    <h3>Cấu hình chương trình</h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h4>Chọn danh sách từ vựng</h4>
+                </td>
+                <td>
+                    <select id="type-of-words-collection-drl">
+                        <option>Chọn kho chứa từ vựng</option>
+                        <option>Mặc định</option>
+                        <option>Của bạn</option>
+                    </select>
+                    <div style="margin-top:5px">
+                        <select id="words-collection-drl">
+                        </select>
+                        <a href="#" id="manager-user-collection-link">Quản lý danh sách</a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h4>Thời gian hiển thị</h4>
+                </td>
+                <td>
+                    <input id="notifyDelayTime" type="text" value="2" /> giây
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h4>Bật tắt âm thanh</h4>
+                </td>
+                <td>
+                    Tiếng Việt
+                    <input id="soundVnCb" type="checkbox" /> Tiếng Anh
+                    <input id="soundEnCb" type="checkbox" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <button id="finishBt">Xong</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="boxshadow" id="manager-user-collection-box" style="display:none">
+        <table>
+            <tr>
+                <td>
+                    <h3>Danh sách của bạn</h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                   <ul id="words-collection-grid"></ul>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="fire-base-user-info" style="display: none">
+        <h4>Bạn chưa đăng nhập. Đăng nhập để cập nhật danh sách</h4>
+        <input type="text" id="user" value="Nhập tên tài khoản">
+        <input type="text" id="pass" value="Nhập mật khẩu">
+        <button id="logingBt">Xong</button>
+    </div>
+</body>
+
+</html>

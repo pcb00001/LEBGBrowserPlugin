@@ -1,3 +1,11 @@
+var configSetting = {
+	notifyTimeDelay: 3,
+	listWords: [wordsCollection.hello],
+	sound: ['en'],
+	image: 'false',
+	encounter: 'random'
+}
+
 var intervalToGetXhrUrlEnToVnGGUrl;
 var googleTranslateUrl = 'https://translate.google.com/?hl=vi#',
 	vnToEnPart = 'vi/en/',
@@ -11,20 +19,39 @@ var responseBean = {};
 var indexWord = 0;
 var currentTabId = -1;
 var isAppRunning = 0;
+var settingPageTabId = -1;
 
+//recive message from content script
+chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
+	console.log("Performing content's event:" + JSON.stringify(msg));
+	switch (msg.type) {
+		case 'updateSetting':
+			configSetting = msg.setting;
+			resetVariable();
+			break;
+	}
+
+	//sendResponse();
+});
+
+function resetVariable() {
+	indexWord = 0;
+}
+
+//recive message from popup script
 chrome.runtime.onConnect.addListener(function (port) {
 	console.log("Background connected .....");
-	port.postMessage(isAppRunning);
+	port.postMessage({ isAppRunning: isAppRunning, currentTabId: currentTabId, settingPageTabId: settingPageTabId });
 	port.onMessage.addListener(function (msg) {
-		
+
 		console.log("Performing popup's event:" + msg);
-		switch (msg) {
+		switch (msg.type) {
 			case 'beginLearningEvent':
-				isAppRunning=1;
+				isAppRunning = 1;
 				doTask();
 				break;
 			case 'stopLearningEvent':
-				isAppRunning=0;
+				isAppRunning = 0;
 				clearInterval(intervalToGetXhrUrlEnToVnGGUrl);
 				break;
 		}
@@ -34,7 +61,7 @@ chrome.runtime.onConnect.addListener(function (port) {
 function doTask() {
 	// step 1: open tab to get xhr url to translate EN to VN
 	//var englishWord = randomEnglishWord();
-	var englishWord = getIncrementEnglishWord();
+	var englishWord = (configSetting.encounter == 'random') ? randomEnglishWord() : getIncrementEnglishWord();
 	initResponseBean('ENTOVN', englishWord);
 	queryNewWord(responseBean.enToVnGGUrl);
 	intervalToGetXhrUrlEnToVnGGUrl = setInterval(function () {
@@ -71,17 +98,29 @@ function doTask() {
 				doTask();
 			});
 		}
-	}, 3000);
+	}, configSetting.notifyTimeDelay * 1000);
 }
 
 
 function doLastStep(callback) {
 	showNofication();
-	playAudio(responseBean.response.audio.en.url);
-	setTimeout(function () {
+	if (configSetting.sound.indexOf('en') != -1 && configSetting.sound.indexOf('vn') == -1) {
+		playAudio(responseBean.response.audio.en.url);
+		callback();
+	} else if (configSetting.sound.indexOf('en') == -1 && configSetting.sound.indexOf('vn') != -1) {
 		playAudio(responseBean.response.audio.vn.url);
 		callback();
-	}, 2000);
+	} else if (configSetting.sound.indexOf('en') != -1 && configSetting.sound.indexOf('vn') != -1) {
+		playAudio(responseBean.response.audio.en.url);
+		setTimeout(function () {
+			playAudio(responseBean.response.audio.vn.url);
+			callback();
+		}, 2000);
+	} else {
+		setTimeout(function () {
+			callback();
+		}, 2000);
+	}
 }
 
 function populateEnAudio() {
@@ -182,14 +221,14 @@ function getVnToEnGGUrlByWord(word) {
 }
 
 function randomEnglishWord() {
-	return englishWords[Math.floor(Math.random() * englishWords.length)];
+	return configSetting.listWords[Math.floor(Math.random() * configSetting.listWords.length)];
 }
 
 function getIncrementEnglishWord() {
-	if (indexWord == (englishWords.length - 1)) {
+	if (indexWord == (configSetting.listWords.length - 1)) {
 		indexWord = 0;
 	}
-	return englishWords[++indexWord];
+	return configSetting.listWords[indexWord++];
 }
 
 function parseQueryString(queryString) {
@@ -226,12 +265,6 @@ function queryNewWord(url) {
 	}
 }
 
-function updateTab(url) {
-
-}
-
-
-
 function translate() {
 	var xhr = new XMLHttpRequest();
 	xhr.open("GET", responseBean.response.text.url, true);
@@ -252,26 +285,56 @@ function translate() {
 
 function showNofication() {
 	var messages =
-		"VN: " + responseBean.response.text.content.translatedText + "(" + responseBean.response.text.content.kindOfWord + ")" +
+		"VN: " + responseBean.response.text.content.translatedText +
+		((responseBean.response.text.content.kindOfWord != "") ? " - " : "") +
+		 responseBean.response.text.content.kindOfWord +
 		((responseBean.response.text.content.examples.length > 0) ? "\nVD: " + responseBean.response.text.content.examples : "");
 	chrome.notifications
 		.create('notification', {
 			iconUrl: iconUrl,
 			type: 'basic',
-			title: '====== ' + responseBean.wordNeedToTranlate + ' ======',
+			title: responseBean.wordNeedToTranlate,
+			requireInteraction: true,
 			message: stripHtmlTags(messages)
 		}, function () {
 			console.log(responseBean.wordNeedToTranlate + ' => ' + responseBean.wordNeedToTranlate);
 		});
 }
 
-chrome.webRequest.onBeforeSendHeaders.addListener(function (trafficInfo) {
-	if (currentTabId == -1) {
-		currentTabId = trafficInfo.tabId;
+function isGoogleTranslateUrl(url) {
+	var urlRegex = /https?:\/\/([^\.]+\.)?google.com/;
+	return (url && urlRegex.test(url));
+}
+
+function isSettingPageUrl(url) {
+	return (url && url.indexOf("content_script_layout.html") != -1);
+}
+
+chrome.tabs.onRemoved.addListener(function (tabId) {
+	if (currentTabId == tabId) { // in this case: the current tab was closed by user.
+		currentTabId = -1;
 	}
 
+	if (settingPageTabId == tabId) {
+		settingPageTabId = -1;
+	}
+});
+
+chrome.tabs.onCreated.addListener(function (tabInfo) {
+
+	if (isGoogleTranslateUrl(tabInfo.url) && currentTabId == -1) {
+		currentTabId = tabInfo.id;
+	}
+
+	if (isSettingPageUrl(tabInfo.url) && settingPageTabId == -1) {
+		settingPageTabId = tabInfo.id;
+	}
+})
+
+chrome.webRequest.onBeforeSendHeaders.addListener(function (trafficInfo) {
+
 	if ((trafficInfo.url.indexOf("translate_a/single") != -1 &&
-			responseBean.response.text.status == "")) {
+		responseBean.response.text.status == "")) {
 		responseBean.response.text.url = trafficInfo.url;
 	}
 
@@ -282,5 +345,5 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function (trafficInfo) {
 		responseBean.response.audio.vn.status = "processed";
 	}
 }, {
-	urls: ["<all_urls>"]
-}, ['requestHeaders', 'blocking']);
+		urls: ["<all_urls>"]
+	}, ['requestHeaders', 'blocking']);

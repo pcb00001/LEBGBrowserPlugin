@@ -1,0 +1,68 @@
+html,
+tbody,
+table {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#content-inside-iframe table {
+    width: 50%;
+    height: 50%;
+    margin: auto;
+    background: #009688;
+    padding: 15px;
+}
+
+#content-inside-iframe table h3 {
+    border-bottom: 1px solid #000;
+}
+
+#content-inside-iframe table select {
+    width: 50%;
+}
+
+#content-inside-iframe table a {
+    margin-left: 5px;
+    color: #080808; 
+    font-weight: bold;
+}
+
+#content-inside-iframe .boxshadow {
+    position: relative;
+    -moz-box-shadow: 1px 2px 4px rgba(0, 0, 0,0.5);
+    -webkit-box-shadow: 1px 2px 4px rgba(0, 0, 0, .5);
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, .5);
+    padding: 10px;
+    background: white;
+}
+
+/* Make the image fit the box */
+#content-inside-iframe .boxshadow table {
+    width: 100%;
+    border: 1px solid #8a4419;
+    border-style: inset;
+}
+
+#content-inside-iframe .boxshadow::after {
+    content: '';
+    position: absolute;
+    z-index: -1; /* hide shadow behind image */
+    -webkit-box-shadow: 0 15px 20px rgba(0, 0, 0, 0.3);
+    -moz-box-shadow: 0 15px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 15px 20px rgba(0, 0, 0, 0.3);                
+    width: 70%; 
+    left: 15%; /* one half of the remaining 30% */
+    bottom: 0;
+}
+
+#content-inside-iframe #words-collection-grid li {
+    margin: 5px;
+    border-bottom: 1px solid;
+}
+
+#content-inside-iframe #words-collection-grid button {
+    float: right;
+    margin-left: 5px;
+}

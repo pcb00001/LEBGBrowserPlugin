@@ -20,22 +20,37 @@
 		"storage",
 		"identity",
 		"webRequest",
-		"webRequestBlocking"
+		"webRequestBlocking",
+		"cookies"
 	],
-    "background": {
-        "scripts": ["list_words.js", "background.js"]
-    },
+	"background": {
+		"scripts": [
+			"words_collection.js",
+			"background.js"
+		]
+	},
 	"browser_action": {
 		"default_popup": "popup.html"
-	}
-/* 	, */
-/* 	 "content_scripts": [ */
-/*         { */
-/*         "matches": [ */
-/*             "<all_urls>" */
-/*             ], */
-/*         "js": ["content.js"], */
-/*         "run_at": "document_end"         // pay attention to this line */
-/*         } */
-/*     ] */
+	},
+	"content_scripts": [
+		{
+			"matches": [
+				"<all_urls>"
+			],
+			"css": [
+				"setting_page.css"
+			],
+			"js": [
+				"jquery-3.3.1.min.js",
+				"content_script.js"
+			],
+			"run_at": "document_end"
+		}
+	],
+	"web_accessible_resources": [
+		"setting_page.html",
+		"content_script_layout.html",
+		"setting_page.js"
+	],
+  	"content_security_policy": "script-src 'self' https://cdn.firebase.com https://*.firebaseio.com; object-src 'self'" // allow content script access these domains
 }
