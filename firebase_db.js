@@ -26,11 +26,16 @@ function initFirebase(callback) {
 
 
 // Saves a new message on the Firebase DB.
-function saveMessage() {
-    var key = messagesRef.push({
-        url: window.location.toString()
-    }).key;
-    return key;
+function saveMessage(messagesRef, data) {
+    return messagesRef.set(data).key;
+};
+
+function updateMessage(messagesRef, data) {
+    return messagesRef.set(data);
+};
+
+function deleteMessage(messagesRef) {
+    return messagesRef.remove();
 };
 
 // Checks that the Firebase SDK has been correctly setup and configured.

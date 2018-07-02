@@ -7,8 +7,9 @@ $(document).ready(function () {
         image: 'false'
     }
 
-    var wordsCollectionSelected = {},
-        userCookie = null;
+    var wordsCollectionSelected = null,
+        userLoginInfo = null,
+        collectionDefaultRef = null;
 
     initFirebase(updateUserCollection);
 
@@ -24,92 +25,142 @@ $(document).ready(function () {
     }
 
     function updateUserCollection() {
-        getCookieUserLogin(function (cookie) {
-            if (cookie != null) {
-                userCookie = cookie;
-                collectionDefaultRef = firebase.database().ref('user/' + userCookie.value);
+        getUserLoginStored(function (user) {
+            userLoginInfo = user;
+            if (userLoginInfo != null) {
+                collectionDefaultRef = firebase.database().ref('user/' + userLoginInfo);
                 // Make sure we remove all previous listeners.
                 collectionDefaultRef.off();
                 collectionDefaultRef.on('value', function (snapshot) {
                     wordsCollection.user = snapshot.val();
-                    requestFireBaseForUser();
+                    $("#type-of-words-collection-drl").change();
                 });
             }
         })
 
     }
 
-    function populateUserCollectionBox() {
+    function populateUserCollectionToHiddenDataGrid() {
         var wordsCollectionGrid = $('#words-collection-grid');
+        wordsCollectionGrid.html('');
         var colt = wordsCollection.user;
         for (var key in colt) {
             if (colt.hasOwnProperty(key)) {
+                var collectionValue = (colt[key].join(", "));
+                wordsCollectionItem = $("<li id='" + key + "'></li>");
+                wordsCollectionItemHead = $("<div><h4></h4></div>");
+                wordsCollectionItemHead.append(key);
+                var delBt = $("<button  id='delBt'>Xóa</button>");
+                var showFormUpdateBt = $("<button  id='showFormUpdateBt' collectionValue='" + collectionValue + "'>Cập nhật</button>");
+                wordsCollectionItemHead.append(delBt);
+                wordsCollectionItemHead.append(showFormUpdateBt);
 
-                wordsCollectionGrid.append(
-                    '<li><div><h4>' + key + '<button>Xóa</button><button>Cập nhật</button></h4></div>' +
-                    (colt[key].join(", ")) +
-                    '</li>');
+                wordsCollectionItem.append(wordsCollectionItemHead);
+                wordsCollectionItem.append(collectionValue);
+                wordsCollectionGrid.append(wordsCollectionItem);
+
             }
         }
+        $('#words-collection-grid #delBt').unbind('click').click(function () {
+            deleteMessage(collectionDefaultRef.child($(this).closest('li').attr('id')), {});
+        });
+        $('#words-collection-grid #showFormUpdateBt').unbind('click').click(function () {
+            var updateForm = $("#form-update-user-collection-item");
+            var key = $(this).closest('li').attr('id');
+            $(updateForm).find("h4").text(key);
+            $(updateForm).find("textarea").val($(this).attr('collectionValue'));
+            $(updateForm).find("#updateBt").unbind('click').click(function () {
+                var newVal = $(updateForm).find("textarea").val().split(',');
+                updateMessage(collectionDefaultRef.child(key), newVal.map((val) => val.trim()));
+                updateForm.hide();
+            });
+            $(updateForm).find("#cancelBt").click(function () {
+                updateForm.hide();
+            });
+            updateForm.show();
+        });
     }
 
+    $('#addNewUserCollection').click(function () {
+        var addNewForm = $("#form-add-new-user-collection-item");
+        $(addNewForm).find("#addNewBt").click(function () {
+            var newVal = $(addNewForm).find("textarea").val().split(',');
+            if (wordsCollection.user == null) {
+                wordsCollection.user = {};
+            }
+            wordsCollection.user[$(addNewForm).find("input").val()] = newVal.map((val) => val.trim());
+            saveMessage(collectionDefaultRef, wordsCollection.user);
+            addNewForm.hide();
+        });
+        $(addNewForm).find("#cancelBt").click(function () {
+            addNewForm.hide();
+        });
+        addNewForm.show();
+    })
+
+
     $("#type-of-words-collection-drl").change(function () {
+        wordsCollectionSelected = null;
+        setting.listWords = [];
         $('#words-collection-drl').html('');
-        if ($(this).val() == "Mặc định") {
-            $('#words-collection-drl').append('<option>Chọn lĩnh vực muốn học</option>');
-            populateCollectionToSelect(wordsCollection.default);
+        $('#manager-user-collection-link').hide();
+        $('#manager-user-collection-hidden-grid').hide();
+
+        if ($(this).val() == 0) {
+            $('#words-collection-drl').append('<option value="-1">Chọn lĩnh vực muốn học</option>');
             wordsCollectionSelected = wordsCollection.default;
-        } else {
-            requestFireBaseForUser();
+            populateCollectionToSelect(wordsCollectionSelected);
+        } else if ($(this).val() == 1) {
+            if (userLoginInfo == null) {
+                $("#fire-base-user-info").show();
+            } else {
+                $('#words-collection-drl').append('<option value="-1">Chọn danh sách của bạn</option>');
+                wordsCollectionSelected = wordsCollection.user;
+                populateCollectionToSelect(wordsCollectionSelected);
+                populateUserCollectionToHiddenDataGrid();
+                $('#manager-user-collection-link').show();
+                $('#manager-user-collection-link').click();
+            }
         }
 
     })
-    $("#logingBt").click(function () {
-        var logingInfo = $('#user').val() + "~" +  $('#pass').val();
-        setCookieUserLogin(logingInfo, function() {
+
+    $("#fire-base-user-info #loginBt").click(function () {
+        var loginInfo = $('#user').val() + "~" + $('#pass').val();
+        storeUserLogin(loginInfo, function () {
             updateUserCollection();
         });
     })
 
-    function getCookieUserLogin(callback) {
-        chrome.cookies.get({
-                url: "https://hoc-tu-vung-71584.firebaseio.com",
-                name: "fire-base-user"
-            },
-            function (cookie) {
-                console.log(cookie);
-                callback(cookie)
+    $("#fire-base-user-info #cancelBt").click(function () {
+        $("#fire-base-user-info").hide();
+    });
+
+    function getUserLoginStored(callback) {
+        chrome.storage.sync.get(["fire-base-user"],
+            function (user) {
+                console.log(user);
+                callback((typeof user["fire-base-user"] !== 'undefined') ? user["fire-base-user"] : null)
             })
     }
 
-    function setCookieUserLogin(cookieValue, callback) {
-        chrome.cookies.set({
-            url: "https://hoc-tu-vung-71584.firebaseio.com",
-            name: "fire-base-user",
-            value: cookieValue
-        }, function() {
+    function storeUserLogin(loginInfo, callback) {
+        chrome.storage.sync.set({
+            "fire-base-user": loginInfo
+        }, function () {
             callback();
         });
     }
 
-    function requestFireBaseForUser() {
-        if (userCookie == null) {
-            $("#fire-base-user-info").show();
-        } else {
-            wordsCollectionSelected = wordsCollection.user;
-            populateCollectionToSelect(wordsCollection.user);
-            populateUserCollectionBox();
-            
-        }
-    }
-
     $("#words-collection-drl").change(function () {
-        setting.listWords = wordsCollectionSelected[$(this).val()];
-
+        setting.listWords = [];
+        if ($(this).val() != -1) {
+            setting.listWords = wordsCollectionSelected[$(this).val()];
+        }
     })
 
     $("#manager-user-collection-link").click(function () {
-        var managerUserCollectionBox = $('#manager-user-collection-box');
+        var managerUserCollectionBox = $('#manager-user-collection-hidden-grid');
         if (managerUserCollectionBox.is(":hidden")) {
             managerUserCollectionBox.show();
         } else {
@@ -119,7 +170,6 @@ $(document).ready(function () {
 
 
     function populateCollectionToSelect(colt) {
-        $('#words-collection-drl').append('<option>Chọn danh sách của bạn</option>');
         for (var key in colt) {
             if (colt.hasOwnProperty(key)) {
                 console.log(key + " -> " + colt[key]);
@@ -129,6 +179,11 @@ $(document).ready(function () {
     }
 
     $('#finishBt').click(function () {
+        if (setting.listWords.length == 0) {
+            alert("Hãy chọn danh sách từ muốn học");
+            return false;
+        }
+
         doGetSettingInfo();
         window.parent.postMessage({
             type: "updateSetting",

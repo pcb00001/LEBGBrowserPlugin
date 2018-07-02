@@ -66,3 +66,18 @@ table {
     float: right;
     margin-left: 5px;
 }
+
+#content-inside-iframe .confirm-dialog {
+    position: absolute;
+    top: 50px;
+    left: 40%;
+    width: 320px;
+    height: 200px;
+    background: #FFC107;
+    padding: 10px;
+}
+
+#content-inside-iframe .confirm-dialog *{
+    padding: 5px;
+    margin: 5px;
+}

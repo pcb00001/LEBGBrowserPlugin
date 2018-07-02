@@ -26,14 +26,14 @@
                 </td>
                 <td>
                     <select id="type-of-words-collection-drl">
-                        <option>Chọn kho chứa từ vựng</option>
-                        <option>Mặc định</option>
-                        <option>Của bạn</option>
+                        <option value="-1">Chọn kho chứa từ vựng</option>
+                        <option value="0">Mặc định</option>
+                        <option value="1">Của bạn</option>
                     </select>
                     <div style="margin-top:5px">
                         <select id="words-collection-drl">
                         </select>
-                        <a href="#" id="manager-user-collection-link">Quản lý danh sách</a>
+                        <a href="#" id="manager-user-collection-link"  style="display:none">Quản lý danh sách</a>
                     </div>
                 </td>
             </tr>
@@ -51,8 +51,8 @@
                 </td>
                 <td>
                     Tiếng Việt
-                    <input id="soundVnCb" type="checkbox" /> Tiếng Anh
-                    <input id="soundEnCb" type="checkbox" />
+                    <input id="soundVnCb" type="checkbox" checked /> Tiếng Anh
+                    <input id="soundEnCb" type="checkbox" checked />
                 </td>
             </tr>
             <tr>
@@ -63,11 +63,14 @@
         </table>
     </div>
 
-    <div class="boxshadow" id="manager-user-collection-box" style="display:none">
+    <div class="boxshadow" id="manager-user-collection-hidden-grid" style="display:none">
         <table>
             <tr>
                 <td>
-                    <h3>Danh sách của bạn</h3>
+                    <h3>Danh sách của bạn
+                        <a href="#" id="addNewUserCollection" style="float:right; text-decoration: none;">Thêm mới danh sách</a>
+                    </h3>
+                    
                 </td>
             </tr>
             <tr>
@@ -78,11 +81,28 @@
         </table>
     </div>
 
-    <div id="fire-base-user-info" style="display: none">
-        <h4>Bạn chưa đăng nhập. Đăng nhập để cập nhật danh sách</h4>
-        <input type="text" id="user" value="Nhập tên tài khoản">
-        <input type="text" id="pass" value="Nhập mật khẩu">
-        <button id="logingBt">Xong</button>
+    <div class="confirm-dialog boxshadow" id="fire-base-user-info" style="display: none">
+        <h4>Bạn chưa đăng nhập. Đăng nhập để cập nhật hoặc tạo mới danh sách</h4>
+        <input type="text" id="user" placeholder="Nhập tên tài khoản">
+        <input type="text" id="pass" placeholder="Nhập mật khẩu">
+        <button id="loginBt">Đăng nhập</button>
+        <button id="cancelBt">Đóng</button>
+    </div>
+
+    <div class="confirm-dialog boxshadow" id="form-update-user-collection-item" style="display: none">
+        <h4 id="user-collection-item-key"></h4>
+        <textarea id="user-collection-item-value" cols="40" rows="7" style="resize: none;"/></textarea>
+        <br/>
+        <button id="updateBt">Cập nhật</button>
+        <button id="cancelBt">Đóng</button>
+    </div>
+
+    <div class="confirm-dialog boxshadow" id="form-add-new-user-collection-item" style="display: none">
+        <input id="user-collection-item-key" placeholder="Nhập tên danh sách mới" style="margin-bottom:5px" />
+        <textarea id="user-collection-item-value" cols="40" rows="7" style="resize: none;"/></textarea>
+        <br/>
+        <button id="addNewBt">Nhập mới</button>
+        <button id="cancelBt">Đóng</button>
     </div>
 </body>
 
