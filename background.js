@@ -1,8 +1,11 @@
 var configSetting = {
 	notifyTimeDelay: 3,
-	listWords: [wordsCollection.hello],
-	sound: ['en'],
-	image: 'false',
+	listWords: [{
+            "enWord": "Hello",
+            "vnWord": "Xin chào",
+            "spelling": ""
+        }],
+	sound: ['en', 'vn'],
 	encounter: 'random'
 }
 
@@ -13,6 +16,7 @@ var googleTranslateUrl = 'https://translate.google.com/?hl=vi#',
 var googleAudioUrl = 'https://translate.google.com/translate_tts?client=t&q=[q]&tk=[tk]&ttsspeed=[ttsspeed]&tl=',
 	audioTlParamEn = 'en',
 	audioTlParamVn = 'vi';
+var imageSearchUrl = 'https://www.google.com/search?q=[q]&tbm=isch';
 var iconUrl = 'icon.png';
 
 var responseBean = {};
@@ -41,7 +45,11 @@ function resetVariable() {
 //recive message from popup script
 chrome.runtime.onConnect.addListener(function (port) {
 	console.log("Background connected .....");
-	port.postMessage({ isAppRunning: isAppRunning, currentTabId: currentTabId, settingPageTabId: settingPageTabId });
+	port.postMessage({
+		isAppRunning: isAppRunning,
+		currentTabId: currentTabId,
+		settingPageTabId: settingPageTabId
+	});
 	port.onMessage.addListener(function (msg) {
 
 		console.log("Performing popup's event:" + msg);
@@ -61,8 +69,8 @@ chrome.runtime.onConnect.addListener(function (port) {
 function doTask() {
 	// step 1: open tab to get xhr url to translate EN to VN
 	//var englishWord = randomEnglishWord();
-	var englishWord = (configSetting.encounter == 'random') ? randomEnglishWord() : getIncrementEnglishWord();
-	initResponseBean('ENTOVN', englishWord);
+	var englishWordBean = (configSetting.encounter == 'random') ? randomEnglishWord() : getIncrementEnglishWord();
+	initResponseBean(englishWordBean);
 	queryNewWord(responseBean.enToVnGGUrl);
 	intervalToGetXhrUrlEnToVnGGUrl = setInterval(function () {
 
@@ -72,15 +80,23 @@ function doTask() {
 			translate();
 		}
 
-		// step 3: populate en audio
+		// step 3: do get thumb image
 		if (responseBean.response.text.status == "successful" &&
+			responseBean.response.thumb.status == "") {
+			responseBean.response.thumb.status = "processing";
+			populateThumb();
+		}
+
+		// step 4: populate en audio
+		if (responseBean.response.text.status == "successful" && 
 			responseBean.response.audio.en.status == "") {
 			populateEnAudio();
 		}
 
-		// step 4: re-translate vn word to get tkParam
+		// step 5: re-translate vn word to get tkParam
 		// VN audio
 		if (responseBean.response.audio.en.status == "successful" &&
+			responseBean.response.thumb.status == "successful" &&
 			responseBean.response.audio.vn.status == "") {
 			responseBean.response.audio.vn.status = "processing";
 			queryNewWord(responseBean.response.text.reverseUrl);
@@ -127,7 +143,7 @@ function populateEnAudio() {
 
 	// English audio
 	var tkParamVal = parseQueryString(responseBean.response.text.url)['tk'];
-	var enAudio = googleAudioUrl.replace('[q]', responseBean.wordNeedToTranlate).replace('[tk]', tkParamVal).replace('[ttsspeed]', 0.5) + audioTlParamEn;
+	var enAudio = googleAudioUrl.replace('[q]', responseBean.wordNeedToTranlateBean.enWord).replace('[tk]', tkParamVal).replace('[ttsspeed]', 0.5) + audioTlParamEn;
 	responseBean.response.audio.en.tkParam = tkParamVal;
 	responseBean.response.audio.en.url = encodeURI(enAudio);
 	responseBean.response.audio.en.status = "successful";
@@ -147,15 +163,16 @@ function playAudio(mediaUrl) {
 	flush.play();
 }
 
-function initResponseBean(type, wordNeedToTranlate) {
-	responseBean['type'] = type;
-	responseBean['wordNeedToTranlate'] = wordNeedToTranlate;
+function initResponseBean(wordNeedToTranlateBean) {
+	responseBean['wordNeedToTranlateBean'] = wordNeedToTranlateBean;
 	responseBean['response'] = {
-		text: initResponseTextBean(),
+		text: initResponseTextBean(wordNeedToTranlateBean),
+		thumb: initResponseThumbBean(),
 		audio: initResponseAudioBean()
 	};
-	responseBean['enToVnGGUrl'] = getEnToVnGGUrlByWord(wordNeedToTranlate);
-	responseBean['vnToEnGGUrl'] = getVnToEnGGUrlByWord(wordNeedToTranlate);
+	responseBean['enToVnGGUrl'] = getEnToVnGGUrlByWord(wordNeedToTranlateBean);
+	responseBean['vnToEnGGUrl'] = '';
+	responseBean['imageSearchUrl'] = getThumbGGUrlByWord(wordNeedToTranlateBean);
 }
 
 function populateTranslatedTextToResponseBean(responseJson) {
@@ -163,7 +180,12 @@ function populateTranslatedTextToResponseBean(responseJson) {
 	var kindOfWord = '';
 	var examples = [];
 	try {
-		translatedText = responseJson[0][0][0];
+		if (responseBean.response.text.content.translatedText != "") {
+			translatedText = responseBean.response.text.content.translatedText;
+		} else {
+			translatedText = responseJson[0][0][0];
+			responseBean.response.text.content.translatedText = translatedText;
+		}
 	} catch (e) {
 		console.log("error: " + e);
 	}
@@ -177,20 +199,39 @@ function populateTranslatedTextToResponseBean(responseJson) {
 	} catch (e) {
 		console.log("error: " + e);
 	}
-	responseBean.response.text.content.translatedText = translatedText;
+
+	
 	responseBean.response.text.content.kindOfWord = kindOfWord;
 	responseBean.response.text.content.examples = examples;
 	responseBean.response.text.reverseUrl = getVnToEnGGUrlByWord(translatedText);
+	
 	responseBean.response.text.status = "successful";
 }
 
-function initResponseTextBean() {
+
+function populateThumbToResponseBean(responseText) {
+	var scriptTags = $(responseText).find('script');
+	var imagesTag = '';
+	scriptTags.each(function(index, scriptTag) {
+		if (scriptTag.innerText.indexOf('(function(){var data') != -1) {
+			imagesTag = scriptTag.innerText;
+		}
+	});
+	// parse imagesTag to get images	
+	imagesTag = imagesTag.substr(imagesTag.indexOf('var')).split('for(var')[0];
+	console.log(imagesTag);
+	eval(imagesTag);
+	responseBean.response.thumb.url = data[0][0][1];
+	responseBean.response.thumb.status = "successful";
+}
+
+function initResponseTextBean(wordNeedToTranlateBean) {
 	return {
 		status: '',
 		url: '',
 		content: {
 			kindOfWord: '',
-			translatedText: '',
+			translatedText: wordNeedToTranlateBean.vnWord,
 			examples: []
 		},
 		reverseUrl: ''
@@ -212,12 +253,24 @@ function initResponseAudioBean() {
 	};
 }
 
-function getEnToVnGGUrlByWord(word) {
-	return googleTranslateUrl + enToVnPart + word;
+function initResponseThumbBean() {
+	return {
+		status: '',
+		url: ''
+	};
 }
 
-function getVnToEnGGUrlByWord(word) {
-	return googleTranslateUrl + vnToEnPart + word;
+
+function getEnToVnGGUrlByWord(wordBean) {
+	return googleTranslateUrl + enToVnPart + wordBean.enWord;
+}
+
+function getVnToEnGGUrlByWord(vnWord) {
+	return googleTranslateUrl + vnToEnPart + vnWord;
+}
+
+function getThumbGGUrlByWord(wordBean) {
+	return imageSearchUrl.replace('[q]', wordBean.enWord);
 }
 
 function randomEnglishWord() {
@@ -283,21 +336,39 @@ function translate() {
 	xhr.send();
 }
 
+function populateThumb() {
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", responseBean.imageSearchUrl, true);
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState == 4) {
+			try {
+				populateThumbToResponseBean(xhr.responseText);
+			} catch (e) {
+				console.log("error: " + e);
+				clearInterval(intervalToGetXhrUrlEnToVnGGUrl);
+				doTask();
+			}
+
+		}
+	}
+	xhr.send();
+}
+
 function showNofication() {
 	var messages =
 		"VN: " + responseBean.response.text.content.translatedText +
 		((responseBean.response.text.content.kindOfWord != "") ? " - " : "") +
-		 responseBean.response.text.content.kindOfWord +
+		responseBean.response.text.content.kindOfWord +
 		((responseBean.response.text.content.examples.length > 0) ? "\nVD: " + responseBean.response.text.content.examples : "");
 	chrome.notifications
 		.create('notification', {
-			iconUrl: iconUrl,
+			iconUrl: responseBean.response.thumb.url,
 			type: 'basic',
-			title: responseBean.wordNeedToTranlate,
+			title: responseBean.wordNeedToTranlateBean.enWord,
 			requireInteraction: true,
 			message: stripHtmlTags(messages)
 		}, function () {
-			console.log(responseBean.wordNeedToTranlate + ' => ' + responseBean.wordNeedToTranlate);
+			console.log(responseBean.wordNeedToTranlateBean.enWord + ' => ' + responseBean.wordNeedToTranlateBean.vnWord);
 		});
 }
 
@@ -333,8 +404,7 @@ chrome.tabs.onCreated.addListener(function (tabInfo) {
 
 chrome.webRequest.onBeforeSendHeaders.addListener(function (trafficInfo) {
 
-	if ((trafficInfo.url.indexOf("translate_a/single") != -1 &&
-		responseBean.response.text.status == "")) {
+	if ((trafficInfo.url.indexOf("translate_a/single") != -1 && responseBean.response.text.status == "")) {
 		responseBean.response.text.url = trafficInfo.url;
 	}
 
@@ -345,5 +415,5 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function (trafficInfo) {
 		responseBean.response.audio.vn.status = "processed";
 	}
 }, {
-		urls: ["<all_urls>"]
-	}, ['requestHeaders', 'blocking']);
+	urls: ["<all_urls>"]
+}, ['requestHeaders', 'blocking']);

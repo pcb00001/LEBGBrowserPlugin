@@ -24,6 +24,7 @@
 	],
 	"background": {
 		"scripts": [
+			"jquery-3.3.1.min.js",
 			"words_collection.js",
 			"background.js"
 		]
@@ -51,5 +52,5 @@
 		"content_script_layout.html",
 		"setting_page.js"
 	],
-  	"content_security_policy": "script-src 'self' https://cdn.firebase.com https://*.firebaseio.com; object-src 'self'" // allow content script access these domains
+  	"content_security_policy": "script-src 'self' 'unsafe-eval' https://cdn.firebase.com https://*.firebaseio.com; object-src 'self' 'unsafe-eval'"
 }

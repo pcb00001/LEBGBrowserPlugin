@@ -2,9 +2,13 @@ $(document).ready(function () {
 
     var setting = {
         notifyTimeDelay: $('#notifyDelayTime').val(),
-        listWords: ['hello', 'goodbye'],
+        listWords: [{
+            "enWord": "frying pan",
+            "vnWord": "chảo rán",
+            "spelling": "/fraɪ.ɪŋpæn/"
+        }],
         sound: [],
-        image: 'false'
+        encounter: 'random'
     }
 
     var wordsCollectionSelected = null,
@@ -22,22 +26,42 @@ $(document).ready(function () {
         if ($('#soundEnCb').is(':checked')) {
             setting.sound.push('en');
         }
+
+        if ($('#randomEncounterRbt').is(':checked')) {
+            setting.encounter = 'random';
+        } else {
+            setting.encounter = 'increment';
+        }
     }
 
     function updateUserCollection() {
+        getDefaultCollection();
         getUserLoginStored(function (user) {
             userLoginInfo = user;
+
             if (userLoginInfo != null) {
-                collectionDefaultRef = firebase.database().ref('user/' + userLoginInfo);
-                // Make sure we remove all previous listeners.
-                collectionDefaultRef.off();
-                collectionDefaultRef.on('value', function (snapshot) {
-                    wordsCollection.user = snapshot.val();
-                    $("#type-of-words-collection-drl").change();
-                });
+                getUserCollection();
             }
         })
 
+    }
+
+    function getUserCollection() {
+        collectionDefaultRef = firebase.database().ref('user/' + userLoginInfo);
+        // Make sure we remove all previous listeners.
+        collectionDefaultRef.off();
+        collectionDefaultRef.on('value', function (snapshot) {
+            wordsCollection.user = snapshot.val();
+            $("#type-of-words-collection-drl").change();
+        });
+    }
+
+    function getDefaultCollection() {
+        // Make sure we remove all previous listeners.
+        firebase.database().ref('default').off();
+        firebase.database().ref('default').on('value', function (snapshot) {
+            wordsCollection.default = snapshot.val();
+        });
     }
 
     function populateUserCollectionToHiddenDataGrid() {
@@ -46,7 +70,7 @@ $(document).ready(function () {
         var colt = wordsCollection.user;
         for (var key in colt) {
             if (colt.hasOwnProperty(key)) {
-                var collectionValue = (colt[key].join(", "));
+                var collectionValue = convertObjectToVals(colt[key]);
                 wordsCollectionItem = $("<li id='" + key + "'></li>");
                 wordsCollectionItemHead = $("<div><h4></h4></div>");
                 wordsCollectionItemHead.append(key);
@@ -71,7 +95,7 @@ $(document).ready(function () {
             $(updateForm).find("textarea").val($(this).attr('collectionValue'));
             $(updateForm).find("#updateBt").unbind('click').click(function () {
                 var newVal = $(updateForm).find("textarea").val().split(',');
-                updateMessage(collectionDefaultRef.child(key), newVal.map((val) => val.trim()));
+                updateMessage(collectionDefaultRef.child(key), convertValsToObject(newVal));
                 updateForm.hide();
             });
             $(updateForm).find("#cancelBt").click(function () {
@@ -81,6 +105,26 @@ $(document).ready(function () {
         });
     }
 
+    function convertValsToObject(vals) {
+        var mapObjs = [];
+        vals.forEach(function (val) {
+            mapObjs.push({
+                "enWord": val,
+                "vnWord": "",
+                "spelling": ""
+            });
+        });
+        return mapObjs;
+    }
+
+    function convertObjectToVals(Object) {
+        var vals = [];
+        Object.forEach(function (o) {
+           vals.push(o.enWord);
+        });
+        return vals.join(',');
+    }
+
     $('#addNewUserCollection').click(function () {
         var addNewForm = $("#form-add-new-user-collection-item");
         $(addNewForm).find("#addNewBt").click(function () {
@@ -88,7 +132,7 @@ $(document).ready(function () {
             if (wordsCollection.user == null) {
                 wordsCollection.user = {};
             }
-            wordsCollection.user[$(addNewForm).find("input").val()] = newVal.map((val) => val.trim());
+            wordsCollection.user[$(addNewForm).find("input").val()] = convertValsToObject(newVal);
             saveMessage(collectionDefaultRef, wordsCollection.user);
             addNewForm.hide();
         });
@@ -97,6 +141,7 @@ $(document).ready(function () {
         });
         addNewForm.show();
     })
+
 
 
     $("#type-of-words-collection-drl").change(function () {
