@@ -186,7 +186,6 @@ $(document).ready(function () {
             defaultCollectionItemSelectedEvent();
         } else if ($this.val() == 1) {
             userCollectionItemSelectedEvent();
-            $('#manager-user-collection-hidden-grid').show();
         }
         if ($this.val != -1) {
             $("#words-collection-drl").change();
@@ -221,6 +220,10 @@ $(document).ready(function () {
             wordsCollectionSelected = wordsCollection.user;
             $('#words-collection-drl').append('<option value="-1">Chọn danh sách của bạn</option>');
             populateCollectionToSelect();
+            if (wordsCollectionSelected == null) {
+                $('#manager-user-collection-hidden-grid').show();
+            }
+             
         }
     }
 
