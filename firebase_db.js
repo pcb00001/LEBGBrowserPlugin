@@ -10,6 +10,8 @@ var config = {
 
 firebase.initializeApp(config);
 
+var collectionDefaultRef = null, collectionUserRef = null;
+
 function FireBaseDB() {
     checkSetup();
 }

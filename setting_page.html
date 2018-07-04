@@ -9,10 +9,44 @@
     <script src="firebase_db.js"></script>
     <script src="words_collection.js"></script>
     <script src="setting_page.js"></script>
+    <script src="./json-collection/import_collection.js"></script>
     <link rel="stylesheet" href="setting_page.css">
 </head>
 
 <body id="content-inside-iframe">
+
+    <div class="boxshadow" id="import-collection-block-div" style="display: none">
+        <table id="my-modal">
+            <tr>
+                <td>
+                    <h3>Nhập danh sách từ mặc định</h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                   <input type="file" id="global-file">
+                   <button id="uploadGlobalBt">Bắt đầu</button>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+
+    <div class="boxshadow" id="manager-admin-global-collection-hidden-grid" style="display:none">
+        <table>
+            <tr>
+                <td>
+                    <h3>Danh sách mặc định </h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <ul id="words-collection-grid"></ul>
+                </td>
+            </tr>
+        </table>
+    </div>
+
     <div class="boxshadow">
         <table id="my-modal">
             <tr>
@@ -33,7 +67,6 @@
                     <div style="margin-top:5px">
                         <select id="words-collection-drl">
                         </select>
-                        <a href="#" id="manager-user-collection-link"  style="display:none">Quản lý danh sách</a>
                     </div>
                 </td>
             </tr>
@@ -80,12 +113,28 @@
                     <h3>Danh sách của bạn
                         <a href="#" id="addNewUserCollection" style="float:right; text-decoration: none;">Thêm mới danh sách</a>
                     </h3>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <ul id="words-collection-grid"></ul>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="boxshadow" id="manager-user-global-collection-hidden-grid" style="display:none">
+        <table>
+            <tr>
+                <td>
+                    <h3>Danh sách mặc định</h3>
                     
                 </td>
             </tr>
             <tr>
                 <td>
-                   <ul id="words-collection-grid"></ul>
+                    <ul id="words-collection-grid"></ul>
                 </td>
             </tr>
         </table>
@@ -101,7 +150,7 @@
 
     <div class="confirm-dialog boxshadow" id="form-update-user-collection-item" style="display: none">
         <h4 id="user-collection-item-key"></h4>
-        <textarea id="user-collection-item-value" cols="40" rows="7" style="resize: none;"/></textarea>
+        <textarea id="user-collection-item-value" cols="40" rows="7" style="resize: none;" /></textarea>
         <br/>
         <button id="updateBt">Cập nhật</button>
         <button id="cancelBt">Đóng</button>
@@ -109,11 +158,12 @@
 
     <div class="confirm-dialog boxshadow" id="form-add-new-user-collection-item" style="display: none">
         <input id="user-collection-item-key" placeholder="Nhập tên danh sách mới" style="margin-bottom:5px" />
-        <textarea id="user-collection-item-value" cols="40" rows="7" style="resize: none;"/></textarea>
+        <textarea id="user-collection-item-value" cols="40" rows="7" style="resize: none;" /></textarea>
         <br/>
         <button id="addNewBt">Nhập mới</button>
         <button id="cancelBt">Đóng</button>
     </div>
+
 </body>
 
 </html>

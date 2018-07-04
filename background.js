@@ -1,4 +1,5 @@
 var configSetting = {
+	collectionKey: '',
 	notifyTimeDelay: 3,
 	listWords: [{
             "enWord": "Hello",

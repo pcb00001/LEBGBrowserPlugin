@@ -3,7 +3,9 @@ $(document).ready(function () {
 });
 
 function renderSettingPage() {
-    $("#settingPageIframe").attr('src', chrome.extension.getURL('setting_page.html'));
+    var params = location.href.split('?');
+    $("#settingPageIframe").attr('src', chrome.extension.getURL('setting_page.html' + 
+    (typeof params[1] !== 'undefined' ? `?${params[1]}` : '')));
     // recive message from child content
     window.addEventListener("message", function (event) {
         if (event.data.type == "updateSetting") {
@@ -12,4 +14,4 @@ function renderSettingPage() {
         }
 
     });
-}
+}   
