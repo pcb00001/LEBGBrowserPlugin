@@ -1,5 +1,5 @@
 var colt = {
-    "Từ vựng các bộ phận trên cơ thể người-10": [{
+    "Từ vựng các bộ phận trên cơ thể người": [{
             "enWord": "face",
             "vnWord": "khuôn mặt",
             "spelling": "/feɪs/"

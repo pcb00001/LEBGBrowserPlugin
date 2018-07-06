@@ -279,7 +279,7 @@ function randomEnglishWord() {
 }
 
 function getIncrementEnglishWord() {
-	if (indexWord == (configSetting.listWords.length - 1)) {
+	if (indexWord == (configSetting.listWords.length)) {
 		indexWord = 0;
 	}
 	return configSetting.listWords[indexWord++];

@@ -18,6 +18,13 @@ $(document).ready(function () {
 
     initFirebase(updateUserCollection);
 
+    var intervalCheckData = setInterval(function() {
+        if (collectionDefaultRef != null || collectionUserRef != null) {
+            $('#mask').hide();
+            clearInterval(intervalCheckData);
+        }
+    }, 1000)
+
     function doGetSettingInfo() {
         setting.notifyTimeDelay = $('#notifyDelayTime').val();
         if ($('#soundVnCb').is(':checked')) {
@@ -53,7 +60,8 @@ $(document).ready(function () {
         collectionUserRef.off();
         collectionUserRef.on('value', function (snapshot) {
             wordsCollection.user = snapshot.val();
-            $("#type-of-words-collection-drl").change();
+             wordsCollectionSelected = wordsCollection.user;
+            $("#words-collection-drl").change();
         });
     }
 
@@ -63,6 +71,7 @@ $(document).ready(function () {
         collectionDefaultRef.off();
         collectionDefaultRef.on('value', function (snapshot) {
             wordsCollection.default = snapshot.val();
+            wordsCollectionSelected = wordsCollection.default;
             $("#type-of-words-collection-drl").change();
         });
     }
@@ -123,10 +132,10 @@ $(document).ready(function () {
     }
 
     function populateGridChildValsForGlobal(vals) {
-        var grid = $('<ul></ul>');
+        var grid = $('<table></table>');
         vals.forEach(function (val) {
-            var itemRow = $('<li></li>');
-            itemRow.append(`<div>${val.enWord}</div><div>${val.vnWord}</div><div>${val.spelling}</div>`);
+            var itemRow = $('<tr></tr>');
+            itemRow.append(`<td>${val.enWord}</td><td>${val.vnWord}</td><td>${val.spelling}</td>`);
             grid.append(itemRow);
         });
         return grid;
@@ -187,7 +196,7 @@ $(document).ready(function () {
         } else if ($this.val() == 1) {
             userCollectionItemSelectedEvent();
         }
-        if ($this.val != -1) {
+        if ($this.val() != -1) {
             $("#words-collection-drl").change();
         }
     })
@@ -220,9 +229,7 @@ $(document).ready(function () {
             wordsCollectionSelected = wordsCollection.user;
             $('#words-collection-drl').append('<option value="-1">Chọn danh sách của bạn</option>');
             populateCollectionToSelect();
-            if (wordsCollectionSelected == null) {
-                $('#manager-user-collection-hidden-grid').show();
-            }
+            $('#manager-user-collection-hidden-grid').show();
              
         }
     }
